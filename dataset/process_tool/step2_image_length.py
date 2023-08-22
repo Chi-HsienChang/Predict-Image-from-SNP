@@ -39,7 +39,7 @@ def resize_to_diameter(image, diameter_cm, pixelspercm, dpi):
     # original_diameter = 1
     
     # 計算像素與公分之間的轉換因子
-    cm_per_pixel = diameter_cm / pixelspercm
+    cm_per_pixel = diameter_cm * pixelspercm
 
     # 計算新的解析度
     new_dpi = dpi * cm_per_pixel
