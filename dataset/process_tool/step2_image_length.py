@@ -71,7 +71,7 @@ def process_images_in_folder(folder_path, csv_path, output_folder_path, dpi=300)
             resized_image = resize_to_diameter(image, desired_diameter_cm, pixelspercm, dpi)
 
             # 儲存新圖像到指定路徑
-            output_path = os.path.join(output_folder_path, f'{image_id}_resized.JPG')
+            output_path = os.path.join(output_folder_path, f'{image_id}_length.JPG')
             resized_image.save(output_path)
 
 
