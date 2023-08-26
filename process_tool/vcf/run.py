@@ -1,4 +1,5 @@
 import os
+import vcf
 import numpy as np
 from PIL import Image
 import torch
@@ -8,22 +9,68 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 import allel
 
-# 讀取 SNP 資料
-callset = allel.read_vcf('filtered.vcf', numbers={'ALT': 1})
-SNP_list = callset['variants/ALT']
-SNP_list = SNP_list[0:100]
 
-def convert_letters_to_numbers(letter_list):
-    letter_to_number = {'A': 0, 'T': 1, 'C': 2, 'G': 3}
-    number_list = [letter_to_number[letter[0]] for letter in letter_list]
-    return number_list
 
-SNP_list = convert_letters_to_numbers(SNP_list)
-print("Integer SNP: ")
-print(SNP_list)
+# 指定包含VCF文件的資料夾
+input_dim = 261
+vcf_folder = 'train_vcf'  # 請替換為您的VCF資料夾路徑
 
-train_input_data = [SNP_list] * 10
-test_input_data = [SNP_list] * 4
+# 定義碱基值對應的整數字典
+base_to_int = {'A': 0, 'T': 1, 'C': 2, 'G': 3}
+
+# 創建一個列表來存儲轉換後的整數值
+int_values_list = []
+
+# 讀取每個 VCF 文件，將碱基值轉換成整數並存儲
+for filename in os.listdir(vcf_folder):
+    if filename.endswith(".vcf"):
+        vcf_path = os.path.join(vcf_folder, filename)
+        vcf_reader = vcf.Reader(filename=vcf_path)
+        int_values = []
+        for record in vcf_reader:
+            for base in record.REF:
+                int_value = base_to_int.get(base.upper(), -1)  # 若不是 A/T/C/G，返回 -1
+                int_values.append(int_value)
+        print(len(int_values))
+        int_values_list.append(int_values)
+
+train_input_data = int_values_list
+
+vcf_folder = 'test_vcf'  # 請替換為您的VCF資料夾路徑
+
+# 定義碱基值對應的整數字典
+base_to_int = {'A': 0, 'T': 1, 'C': 2, 'G': 3}
+
+# 創建一個列表來存儲轉換後的整數值
+int_values_list = []
+
+# 讀取每個 VCF 文件，將碱基值轉換成整數並存儲
+for filename in os.listdir(vcf_folder):
+    if filename.endswith(".vcf"):
+        vcf_path = os.path.join(vcf_folder, filename)
+        vcf_reader = vcf.Reader(filename=vcf_path)
+        int_values = []
+        for record in vcf_reader:
+            for base in record.REF:
+                int_value = base_to_int.get(base.upper(), -1)  # 若不是 A/T/C/G，返回 -1
+                int_values.append(int_value)
+        print(len(int_values))
+        int_values_list.append(int_values)
+
+
+test_input_data = int_values_list
+
+different_positions = 0
+position_count = len(test_input_data[0])  # 假設每組列表的長度相同
+
+for i in range(position_count):
+    values_at_position = set(item[i] for item in test_input_data)
+    if len(values_at_position) > 1:
+        different_positions += 1
+
+print(f"有 {different_positions} 個位置的值不同。")
+
+# print("test_input_data", test_input_data)
 
 # 讀取訓練圖像
 train_images = []
@@ -62,7 +109,7 @@ test_output_tensor = test_output_data.clone().detach()
 class Generator(nn.Module):
     def __init__(self, output_height, output_width):
         super(Generator, self).__init__()
-        self.fc1 = nn.Linear(100, 512)
+        self.fc1 = nn.Linear(input_dim, 512)
         self.fc2 = nn.Linear(512, output_height * output_width)
         self.output_height = output_height
         self.output_width = output_width
